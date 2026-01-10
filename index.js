@@ -16,15 +16,15 @@ const app = express();
 app.use(cors({
   origin: [
     "https://www.amtyglobal.com",
-    "https://amtyglobal.com",
-    "http://localhost:3000",
-    "http://localhost:5173"
+    "https://amtyglobal.com"
   ],
   methods: ["POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"]
+  allowedHeaders: ["Content-Type"],
+  credentials: true
 }));
 
-app.use(express.json());
+/* Preflight fix */
+app.options("*", cors());
 
 /* ---------------- ROUTE ---------------- */
 
