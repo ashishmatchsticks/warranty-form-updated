@@ -13,18 +13,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 /* ---------------- CORS ---------------- */
-app.use(cors({
-  origin: [
-    "https://www.amtyglobal.com",
-    "https://amtyglobal.com"
-  ],
-  methods: ["POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
-  credentials: true
-}));
+// CORS: Allow only your Shopify store
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGIN || "https://amty-global.myshopify.com",
+    methods: ["POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
 
-/* Preflight fix */
-app.options("*", cors());
+app.use(express.json({ limit: "10mb" }));
+
 
 /* ---------------- ROUTE ---------------- */
 
