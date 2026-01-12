@@ -61,21 +61,15 @@ app.post("/api/submit", async (req, res) => {
     ctx.font = "28px monospace";
     let y = 160;
 
-    ctx.fillText(`Customer Name : ${name}`, 50, y);
-    y += 50;
-    ctx.fillText(`Mobile Number : ${phone}`, 50, y);
-    y += 50;
-    ctx.fillText(`Email Address : ${email}`, 50, y);
-    y += 50;
-    ctx.fillText(`Product Model : ${productModel}`, 50, y);
-    y += 50;
-    ctx.fillText(`Purchase Date : ${purchaseDate}`, 50, y);
-    y += 50;
+    ctx.fillText(`Customer Name : ${name}`, 50, y); y += 50;
+    ctx.fillText(`Mobile Number : ${phone}`, 50, y); y += 50;
+    ctx.fillText(`Email Address : ${email}`, 50, y); y += 50;
+    ctx.fillText(`Product Model : ${productModel}`, 50, y); y += 50;
+    ctx.fillText(`Purchase Date : ${purchaseDate}`, 50, y); y += 50;
     ctx.fillText(`Warranty Period : ${warrantyPeriod}`, 50, y);
 
     /* LOGO */
     const logo = await loadImage(path.join(__dirname, "../assets", "logo.png"));
-
     const maxLogoWidth = 330;
     const scale = maxLogoWidth / logo.width;
 
@@ -85,25 +79,39 @@ app.post("/api/submit", async (req, res) => {
     const badge = await loadImage(
       path.join(__dirname, "../assets", "badge.png")
     );
-
     ctx.drawImage(badge, 800, 280, 260, 260);
 
-    /* FOOTER */
+    /* ---------------- FOOTER ICONS ---------------- */
+
+    const callIcon = await loadImage(
+      path.join(__dirname, "../assets", "call.png")
+    );
+    const emailIcon = await loadImage(
+      path.join(__dirname, "../assets", "email.png")
+    );
+    const webIcon = await loadImage(
+      path.join(__dirname, "../assets", "web.png")
+    );
+
     ctx.font = "22px Arial";
     ctx.fillStyle = "#000";
 
     const footerY = 550;
     const iconX = 50;
-    const textX = 90;
+    const textX = 100;
     const gap = 40;
+    const iconSize = 26;
 
-    ctx.fillText("📞", iconX, footerY);
+    /* Phone */
+    ctx.drawImage(callIcon, iconX, footerY - 20, iconSize, iconSize);
     ctx.fillText("+91 92206 34489", textX, footerY);
 
-    ctx.fillText("✉️", iconX, footerY + gap);
+    /* Email */
+    ctx.drawImage(emailIcon, iconX, footerY + gap - 20, iconSize, iconSize);
     ctx.fillText("support@amtyglobal.com", textX, footerY + gap);
 
-    ctx.fillText("🌐", iconX, footerY + gap * 2);
+    /* Website */
+    ctx.drawImage(webIcon, iconX, footerY + gap * 2 - 20, iconSize, iconSize);
     ctx.fillText("amtyglobal.com", textX, footerY + gap * 2);
 
     const imageBuffer = canvas.toBuffer("image/png");
@@ -123,35 +131,28 @@ app.post("/api/submit", async (req, res) => {
       to: process.env.ADMIN_EMAIL,
       subject: "Warranty Registration",
       html: `
-  <div style="font-family:Arial, sans-serif; color:#222; line-height:1.6;">
-    
-    <h2 style="color:#d4af37;">New Warranty Application Received</h2>
+      <div style="font-family:Arial, sans-serif; color:#222; line-height:1.6;">
+        <h2 style="color:#d4af37;">New Warranty Application Received</h2>
 
-    <p>
-      A new warranty application has been submitted through the website.
-      Please review the attached warranty card and proceed with the next steps as required.
-    </p>
+        <p>
+          A new warranty application has been submitted through the website.
+          Please review the attached warranty card and proceed with the next steps.
+        </p>
 
-    <p><b>Action Required:</b></p>
-    <ul>
-      <li>Verify customer details</li>
-      <li>Approve warranty registration</li>
-      <li>Update internal records</li>
-      <li>Contact customer if needed</li>
-    </ul>
+        <ul>
+          <li>Verify customer details</li>
+          <li>Approve warranty registration</li>
+          <li>Update internal records</li>
+          <li>Contact customer if required</li>
+        </ul>
 
-    <p>
-      The generated warranty card is attached with this email for reference.
-    </p>
+        <p>The generated warranty card is attached.</p>
 
-    <br>
-
-    <p style="font-size:13px;color:#666;">
-      This is an automated message from AMTY Global Warranty System.
-    </p>
-
-  </div>
-`,
+        <p style="font-size:13px;color:#666;">
+          This is an automated message from AMTY Global.
+        </p>
+      </div>
+      `,
       attachments: [
         {
           filename: "warranty-card.png",
@@ -161,6 +162,7 @@ app.post("/api/submit", async (req, res) => {
     });
 
     console.log("Email sent via Resend");
+
   } catch (err) {
     console.error("FULL ERROR:", err);
   }
