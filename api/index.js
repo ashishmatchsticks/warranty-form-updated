@@ -83,7 +83,7 @@ app.post("/api/submit", async (req, res) => {
     /* ---------------- LOGO ---------------- */
 
     const logo = await loadImage(
-      path.join(__dirname, "assets", "logo.png")
+      path.join(__dirname, "../assets", "logo.png")
     );
 
     const maxLogoWidth = 330;
@@ -96,7 +96,7 @@ app.post("/api/submit", async (req, res) => {
     /* ---------------- BADGE ---------------- */
 
     const badge = await loadImage(
-      path.join(__dirname, "assets", "badge.png")
+      path.join(__dirname, "../assets", "badge.png")
     );
 
     ctx.drawImage(badge, 800, 280, 260, 260);
