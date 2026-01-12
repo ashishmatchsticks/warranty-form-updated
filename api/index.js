@@ -1,16 +1,17 @@
 import express from "express";
 import cors from "cors";
 import { createCanvas, loadImage } from "canvas";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import "dotenv/config";
 import path from "path";
 import { fileURLToPath } from "url";
 
-/* __dirname fix for ES Modules */
+/* __dirname fix */
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 /* ---------------- CORS ---------------- */
 app.use(
@@ -28,17 +29,10 @@ app.use(express.json({ limit: "20mb" }));
 app.post("/api/submit", async (req, res) => {
   console.log("Incoming Request Body:", req.body);
 
-  const {
-    name,
-    phone,
-    email,
-    productModel,
-    purchaseDate,
-    warrantyPeriod
-  } = req.body;
+  const { name, phone, email, productModel, purchaseDate, warrantyPeriod } =
+    req.body;
 
   try {
-    /* Validation */
     if (!name || !phone || !email) {
       return res.status(400).json({
         success: false,
@@ -50,7 +44,6 @@ app.post("/api/submit", async (req, res) => {
 
     const width = 1200;
     const height = 700;
-
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
@@ -68,28 +61,25 @@ app.post("/api/submit", async (req, res) => {
     ctx.font = "28px monospace";
     let y = 160;
 
-    ctx.fillText(`Customer Name : ${name}`, 50, y); y += 50;
-    ctx.fillText(`Mobile Number : ${phone}`, 50, y); y += 50;
-    ctx.fillText(`Email Address : ${email}`, 50, y); y += 50;
-    ctx.fillText(`Product Model : ${productModel}`, 50, y); y += 50;
-    ctx.fillText(`Purchase Date : ${purchaseDate}`, 50, y); y += 50;
+    ctx.fillText(`Customer Name : ${name}`, 50, y);
+    y += 50;
+    ctx.fillText(`Mobile Number : ${phone}`, 50, y);
+    y += 50;
+    ctx.fillText(`Email Address : ${email}`, 50, y);
+    y += 50;
+    ctx.fillText(`Product Model : ${productModel}`, 50, y);
+    y += 50;
+    ctx.fillText(`Purchase Date : ${purchaseDate}`, 50, y);
+    y += 50;
     ctx.fillText(`Warranty Period : ${warrantyPeriod}`, 50, y);
 
     /* LOGO */
-    const logo = await loadImage(
-      path.join(__dirname, "../assets", "logo.png")
-    );
+    const logo = await loadImage(path.join(__dirname, "../assets", "logo.png"));
 
     const maxLogoWidth = 330;
     const scale = maxLogoWidth / logo.width;
 
-    ctx.drawImage(
-      logo,
-      780,
-      80,
-      logo.width * scale,
-      logo.height * scale
-    );
+    ctx.drawImage(logo, 780, 80, logo.width * scale, logo.height * scale);
 
     /* BADGE */
     const badge = await loadImage(
@@ -119,62 +109,64 @@ app.post("/api/submit", async (req, res) => {
     const imageBuffer = canvas.toBuffer("image/png");
     console.log("Image generated successfully");
 
-    /* ---------------- SEND RESPONSE FIRST ---------------- */
+    /* ---------------- SEND RESPONSE FAST ---------------- */
 
     res.json({
       success: true,
-      message: "Form submitted successfully"
+      message: "Form submitted successfully",
     });
 
-    /* ---------------- EMAIL (BACKGROUND) ---------------- */
+    /* ---------------- EMAIL (RESEND) ---------------- */
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER || "ashishroywork@gmail.com",
-        pass: process.env.EMAIL_PASS || "kerkmdzsgcceinrg",
-      }
-    });
-
-    transporter.sendMail({
-      from: process.env.EMAIL_USER || "ashishroywork@gmail.com",
-      to: process.env.ADMIN_EMAIL || "ashish.matchsticks@gmail.com",
+    await resend.emails.send({
+      from: process.env.FROM_EMAIL || "onboarding@resend.dev",
+      to: process.env.ADMIN_EMAIL,
       subject: "Warranty Registration",
       html: `
-        <h3>New Warranty Registration</h3>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Phone:</b> ${phone}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Product:</b> ${productModel}</p>
-        <p><b>Purchase Date:</b> ${purchaseDate}</p>
-        <p><b>Warranty:</b> ${warrantyPeriod}</p>
-      `,
+  <div style="font-family:Arial, sans-serif; color:#222; line-height:1.6;">
+    
+    <h2 style="color:#d4af37;">New Warranty Application Received</h2>
+
+    <p>
+      A new warranty application has been submitted through the website.
+      Please review the attached warranty card and proceed with the next steps as required.
+    </p>
+
+    <p><b>Action Required:</b></p>
+    <ul>
+      <li>Verify customer details</li>
+      <li>Approve warranty registration</li>
+      <li>Update internal records</li>
+      <li>Contact customer if needed</li>
+    </ul>
+
+    <p>
+      The generated warranty card is attached with this email for reference.
+    </p>
+
+    <br>
+
+    <p style="font-size:13px;color:#666;">
+      This is an automated message from AMTY Global Warranty System.
+    </p>
+
+  </div>
+`,
       attachments: [
         {
           filename: "warranty-card.png",
-          content: imageBuffer
-        }
-      ]
-    })
-    .then(() => {
-      console.log("Email sent successfully");
-    })
-    .catch(err => {
-      console.error("Email error:", err);
+          content: imageBuffer.toString("base64"),
+        },
+      ],
     });
 
+    console.log("Email sent via Resend");
   } catch (err) {
     console.error("FULL ERROR:", err);
-
-    res.status(500).json({
-      success: false,
-      errorType: err.code || "UNKNOWN",
-      message: err.message
-    });
   }
 });
 
-/* ---------------- SERVER START ---------------- */
+/* ---------------- SERVER ---------------- */
 
 const PORT = process.env.PORT || 5000;
 
