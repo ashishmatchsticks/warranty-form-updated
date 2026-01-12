@@ -21,7 +21,7 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "20mb" }));
 
 /* ---------------- ROUTE ---------------- */
 
@@ -43,7 +43,6 @@ app.post("/api/submit", async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
-        received: req.body
       });
     }
 
@@ -55,21 +54,17 @@ app.post("/api/submit", async (req, res) => {
     const canvas = createCanvas(width, height);
     const ctx = canvas.getContext("2d");
 
-    /* Background */
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, width, height);
 
-    /* Gold Border */
     ctx.strokeStyle = "#d4af37";
     ctx.lineWidth = 15;
     ctx.strokeRect(10, 10, width - 20, height - 20);
 
-    /* Title */
     ctx.fillStyle = "#000";
     ctx.font = "bold 48px serif";
     ctx.fillText("Warranty Card", 50, 80);
 
-    /* Details */
     ctx.font = "28px monospace";
     let y = 160;
 
@@ -80,29 +75,30 @@ app.post("/api/submit", async (req, res) => {
     ctx.fillText(`Purchase Date : ${purchaseDate}`, 50, y); y += 50;
     ctx.fillText(`Warranty Period : ${warrantyPeriod}`, 50, y);
 
-    /* ---------------- LOGO ---------------- */
-
+    /* LOGO */
     const logo = await loadImage(
       path.join(__dirname, "../assets", "logo.png")
     );
 
     const maxLogoWidth = 330;
     const scale = maxLogoWidth / logo.width;
-    const logoWidth = logo.width * scale;
-    const logoHeight = logo.height * scale;
 
-    ctx.drawImage(logo, 780, 80, logoWidth, logoHeight);
+    ctx.drawImage(
+      logo,
+      780,
+      80,
+      logo.width * scale,
+      logo.height * scale
+    );
 
-    /* ---------------- BADGE ---------------- */
-
+    /* BADGE */
     const badge = await loadImage(
       path.join(__dirname, "../assets", "badge.png")
     );
 
     ctx.drawImage(badge, 800, 280, 260, 260);
 
-    /* ---------------- FOOTER ---------------- */
-
+    /* FOOTER */
     ctx.font = "22px Arial";
     ctx.fillStyle = "#000";
 
@@ -123,7 +119,14 @@ app.post("/api/submit", async (req, res) => {
     const imageBuffer = canvas.toBuffer("image/png");
     console.log("Image generated successfully");
 
-    /* ---------------- EMAIL ---------------- */
+    /* ---------------- SEND RESPONSE FIRST ---------------- */
+
+    res.json({
+      success: true,
+      message: "Form submitted successfully"
+    });
+
+    /* ---------------- EMAIL (BACKGROUND) ---------------- */
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -133,24 +136,31 @@ app.post("/api/submit", async (req, res) => {
       }
     });
 
-    await transporter.sendMail({
+    transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL,
       subject: "Warranty Registration",
-      html: `<h3>New Warranty Registration</h3>`,
+      html: `
+        <h3>New Warranty Registration</h3>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Phone:</b> ${phone}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Product:</b> ${productModel}</p>
+        <p><b>Purchase Date:</b> ${purchaseDate}</p>
+        <p><b>Warranty:</b> ${warrantyPeriod}</p>
+      `,
       attachments: [
         {
           filename: "warranty-card.png",
           content: imageBuffer
         }
       ]
-    });
-
-    console.log("Email sent successfully");
-
-    res.json({
-      success: true,
-      message: "Form submitted & email sent"
+    })
+    .then(() => {
+      console.log("Email sent successfully");
+    })
+    .catch(err => {
+      console.error("Email error:", err);
     });
 
   } catch (err) {
