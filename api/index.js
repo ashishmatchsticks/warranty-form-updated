@@ -33,7 +33,7 @@ app.post("/api/submit", async (req, res) => {
     req.body;
 
   try {
-    if (!name || !phone || !email) {
+    if (!name || !phone || !productModel || !purchaseDate || !warrantyPeriod) {
       return res.status(400).json({
         success: false,
         error: "Missing required fields",
