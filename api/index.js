@@ -127,7 +127,7 @@ app.post("/api/submit", async (req, res) => {
     /* ---------------- EMAIL (RESEND) ---------------- */
 
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || "onboarding@resend.dev",
+      from: process.env.FROM_EMAIL,
       to: process.env.ADMIN_EMAIL,
       subject: "Warranty Registration",
       html: `
