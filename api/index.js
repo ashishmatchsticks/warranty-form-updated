@@ -131,14 +131,14 @@ app.post("/api/submit", async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER || "ashishroywork@gmail.com",
+        pass: process.env.EMAIL_PASS || "kerkmdzsgcceinrg",
       }
     });
 
     transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.ADMIN_EMAIL,
+      from: process.env.EMAIL_USER || "ashishroywork@gmail.com",
+      to: process.env.ADMIN_EMAIL || "ashish.matchsticks@gmail.com",
       subject: "Warranty Registration",
       html: `
         <h3>New Warranty Registration</h3>
