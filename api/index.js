@@ -16,7 +16,7 @@ const app = express();
 // CORS: Allow only your Shopify store
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGIN || "https://amty-global.myshopify.com",
+    origin: process.env.ALLOWED_ORIGIN || "https://www.amtyglobal.com/",
     methods: ["POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
